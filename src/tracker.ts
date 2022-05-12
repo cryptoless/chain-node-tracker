@@ -4,8 +4,7 @@ import { RemoteAdapter, LocalAdapter } from './adapter';
 export interface Options {
   enable?: boolean;
   logger?: Console;
-  startBlock?: IBlock;
-  endBlock?: IBlock;
+  startBlock?: number;
   interval?: number;
   concurrency?: number;
   behind?: number;
@@ -22,8 +21,7 @@ export class Tracker {
   concurrency: number;
   behind: number;
 
-  startBlock?: IBlock;
-  endBlock?: IBlock;
+  startBlock?: number;
 
   _currentBlock?: IBlock;
   _remoteBlock?: IBlock;
@@ -37,7 +35,6 @@ export class Tracker {
     this.enable = options?.enable || false;
     this.logger = options.logger || console;
     this.startBlock = options.startBlock;
-    this.endBlock = options.endBlock;
     this.interval = options.interval || 0;
     this.concurrency = options.concurrency || 1;
     this.behind = options.behind || 0;
@@ -64,7 +61,10 @@ export class Tracker {
   }
 
   async prepare() {
-    throw new Error('Please implement prepare function');
+    const block = await this.localAdapter.getLatestBlock();
+    const number = block?.number ?? -1;
+    this._currentBlock = await this.localAdapter.getBlockByNumber(number + 1);
+    this._remoteBlock = await this.remoteAdapter.getLatestBlock();
   }
 
   /**
@@ -81,7 +81,7 @@ export class Tracker {
    * @param _block current block
    * @returns void
    */
-  async failed(_block: IBlock) {
+  async failed(_blockNumber: IBlock) {
     throw new Error('Please implement failed function');
   }
 
@@ -110,9 +110,16 @@ export class Tracker {
 
   // previous block hash is changes, need to rollback
   async shouldRollback() {
+    const result = { rollback: false, synced: undefined, remote: undefined };
     if (!this.currentBlock.number) {
-      return { rollback: false };
+      return result;
     }
+
+    if (this.startBlock && this.currentBlock.number < this.startBlock) {
+      this.currentBlock.number = this.startBlock;
+      return result;
+    }
+
     const blockNumber = this.currentBlock.number - 1;
     const [synced, remote] = await Promise.all([
       this.localAdapter.getBlockByNumber(blockNumber), // local
