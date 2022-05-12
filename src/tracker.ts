@@ -1,0 +1,225 @@
+import { IBlock } from './block';
+import { RemoteAdapter, LocalAdapter } from './adapter';
+
+export interface Options {
+  enable?: boolean;
+  logger?: Console;
+  startBlock?: IBlock;
+  endBlock?: IBlock;
+  interval?: number;
+  concurrency?: number;
+  behind?: number;
+  localAdapter: LocalAdapter<IBlock>;
+  remoteAdapter: RemoteAdapter<IBlock>;
+}
+
+export class Tracker {
+  logger: Console;
+  isSyncing: boolean;
+  stopped: boolean;
+  enable: boolean;
+  interval: number;
+  concurrency: number;
+  behind: number;
+
+  startBlock?: IBlock;
+  endBlock?: IBlock;
+
+  _currentBlock?: IBlock;
+  _remoteBlock?: IBlock;
+
+  localAdapter: LocalAdapter<IBlock>;
+  remoteAdapter: RemoteAdapter<IBlock>;
+
+  constructor(options: Options) {
+    this.isSyncing = false;
+    this.stopped = false;
+    this.enable = options?.enable || false;
+    this.logger = options.logger || console;
+    this.startBlock = options.startBlock;
+    this.endBlock = options.endBlock;
+    this.interval = options.interval || 0;
+    this.concurrency = options.concurrency || 1;
+    this.behind = options.behind || 0;
+    this.localAdapter = options.localAdapter;
+    this.remoteAdapter = options.remoteAdapter;
+  }
+
+  get currentBlock() {
+    if (!this._currentBlock) {
+      throw new Error('Please wait for current block init');
+    }
+    return this._currentBlock;
+  }
+
+  get remoteBlock() {
+    if (!this._remoteBlock) {
+      throw new Error('Please wait for remote block init');
+    }
+    return this._remoteBlock;
+  }
+
+  async doRollback(_block: IBlock, _remote: IBlock): Promise<IBlock> {
+    throw new Error('Please implement doRollback function');
+  }
+
+  async prepare() {
+    throw new Error('Please implement prepare function');
+  }
+
+  /**
+   * @param _block current block number
+   * @param _needed need to sync block count
+   * @returns the next block number to sync
+   */
+  async succeeded(_block: IBlock, _needed = 1): Promise<IBlock> {
+    throw new Error('Please implement succeeded function');
+  }
+
+  /**
+   *
+   * @param _block current block
+   * @returns void
+   */
+  async failed(_block: IBlock) {
+    throw new Error('Please implement failed function');
+  }
+
+  get disable() {
+    return typeof this.enable === 'string' ? !['true', '1', 'yes'].includes(this.enable) : !this.enable;
+  }
+
+  async sleep(_ms: number) {
+    return 0;
+  }
+
+  async refreshBlock(block: IBlock) {
+    if (!block.hash || !block.time) {
+      return this.remoteAdapter.getBlockByNumber(block.number);
+    }
+    return block;
+  }
+
+  async pause(_blockNumber?: number) {
+    return false;
+  }
+
+  async doPause(): Promise<void> {
+    return;
+  }
+
+  // previous block hash is changes, need to rollback
+  async shouldRollback() {
+    if (!this.currentBlock.number) {
+      return { rollback: false };
+    }
+    const blockNumber = this.currentBlock.number - 1;
+    const [synced, remote] = await Promise.all([
+      this.localAdapter.getBlockByNumber(blockNumber), // local
+      this.remoteAdapter.getBlockByNumber(blockNumber), // remote
+    ]);
+
+    return {
+      rollback: synced?.hash === remote?.hash && !remote?.hash,
+      synced,
+      remote,
+    };
+  }
+
+  async start() {
+    if (this.disable) {
+      this.logger.info(`Disable ${this.constructor.name}`);
+      return;
+    }
+    this.stopped = false;
+    await this.prepare();
+    return this.startSync();
+  }
+
+  async stop() {
+    this.logger.info(`Stopping worker for chain at: ${new Date()}`);
+    this.stopped = true;
+    this.isSyncing = false;
+  }
+
+  async startSync() {
+    while (!this.stopped) {
+      await this.loop();
+    }
+  }
+
+  async loop(): Promise<void> {
+    if (this.isSyncing) {
+      return;
+    }
+    try {
+      const shouldPause = await this.pause();
+      if (shouldPause) {
+        await this.doPause();
+        return;
+      }
+      this.isSyncing = true;
+      this._currentBlock = await this.refreshBlock(this.currentBlock);
+
+      if (!this._currentBlock?.hash) {
+        this.logger.info(`Refresh block failed, current block: ${this.currentBlock.number}`);
+        await this.sleep(this.interval);
+        this.isSyncing = false;
+        return;
+      }
+
+      const rollback = await this.shouldRollback();
+      if (rollback.rollback) {
+        if (!rollback.synced || !rollback.remote) throw new Error('rollback synced or remote is undefined');
+        this._currentBlock = await this.doRollback(rollback.synced, rollback.remote);
+        this.logger.info(
+          `Rollback ${JSON.stringify({
+            rollback: rollback.synced,
+            current: this.currentBlock,
+            latest: this.remoteBlock,
+            at: new Date(),
+          })}`,
+        );
+
+        this.isSyncing = false;
+        return;
+      }
+
+      const distance = this.remoteBlock.number - this.behind - this.currentBlock.number + 1;
+      const needed = Math.min(Math.max(distance, 1), this.concurrency);
+      if (distance < 0) {
+        this.logger.info(`synced up the height (${this.remoteBlock.number}) at: ${new Date()}, will sleep ${this.interval}`);
+        this._remoteBlock = await this.remoteAdapter.getLatestBlock();
+        await this.sleep(this.interval);
+        this.isSyncing = false;
+        return;
+      }
+
+      this.logger.info(
+        `Syncing ${JSON.stringify({
+          current: this.currentBlock,
+          latest: this.remoteBlock,
+          behind: distance,
+          needed,
+          at: new Date(),
+        })}`,
+      );
+
+      this._currentBlock = await this.succeeded(this.currentBlock, needed);
+      this.isSyncing = false;
+      return;
+    } catch (e) {
+      this.logger?.error(
+        `Syncing failed: ${JSON.stringify({
+          height: this.currentBlock,
+          at: new Date(),
+        })}`,
+        e,
+      );
+      await this.failed(this.currentBlock);
+      this.sleep(this.interval);
+      this.isSyncing = false;
+      return;
+    }
+  }
+}
