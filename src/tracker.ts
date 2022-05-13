@@ -135,7 +135,7 @@ export class Tracker {
 
   async start() {
     if (this.disable) {
-      this.logger.info(`Disable ${this.constructor.name}`);
+      this.logger.info(`[Tracker]  Disable ${this.constructor.name}`);
       return;
     }
     this.stopped = false;
@@ -144,14 +144,14 @@ export class Tracker {
   }
 
   async stop() {
-    this.logger.info(`Stopping worker for chain at: ${new Date()}`);
+    this.logger.info(`[Tracker] Stopping worker for chain at: ${new Date()}`);
     this.stopped = true;
     this.isSyncing = false;
   }
 
   async startSync() {
     while (!this.stopped) {
-      await this.loop();
+      await this.loop().catch(this.logger.error);
     }
   }
 
@@ -169,7 +169,7 @@ export class Tracker {
       this._currentBlock = await this.refreshBlock(this.currentBlock);
 
       if (!this._currentBlock?.hash) {
-        this.logger.info(`Refresh block failed, current block: ${this.currentBlock.number}`);
+        this.logger.info(`[Tracker] Refresh block failed, current block: ${this.currentBlock.number}`);
         await this.sleep(this.interval);
         this.isSyncing = false;
         return;
@@ -179,15 +179,7 @@ export class Tracker {
       if (rollback.rollback) {
         if (!rollback.synced || !rollback.remote) throw new Error('rollback synced or remote is undefined');
         this._currentBlock = await this.doRollback(rollback.synced, rollback.remote);
-        this.logger.info(
-          `Rollback ${JSON.stringify({
-            rollback: rollback.synced,
-            current: this.currentBlock,
-            latest: this.remoteBlock,
-            at: new Date(),
-          })}`,
-        );
-
+        this.logger.info(`[Tracker] Rollback... rollback ${rollback.synced}, current ${this.currentBlock}, latest ${this.remoteBlock} at ${new Date()}`);
         this.isSyncing = false;
         return;
       }
@@ -195,34 +187,20 @@ export class Tracker {
       const distance = this.remoteBlock.number - this.behind - this.currentBlock.number + 1;
       const needed = Math.min(Math.max(distance, 1), this.concurrency);
       if (distance < 0) {
-        this.logger.info(`synced up the height (${this.remoteBlock.number}) at: ${new Date()}, will sleep ${this.interval}`);
+        this.logger.info(`[Tracker] Refresh... ${this.remoteBlock.number} -> ${this.remoteBlock.number}, will sleep ${this.interval}`);
         this._remoteBlock = await this.remoteAdapter.getLatestBlock();
         await this.sleep(this.interval);
         this.isSyncing = false;
         return;
       }
 
-      this.logger.info(
-        `Syncing ${JSON.stringify({
-          current: this.currentBlock,
-          latest: this.remoteBlock,
-          behind: distance,
-          needed,
-          at: new Date(),
-        })}`,
-      );
+      this.logger.info(`[Tracker] Ing... ${this.remoteBlock.number} -> ${this.remoteBlock.number} behind ${distance}, will sync ${needed} blocks at ${new Date()}`);
 
       this._currentBlock = await this.succeeded(this.currentBlock, needed);
       this.isSyncing = false;
       return;
-    } catch (e) {
-      this.logger?.error(
-        `Syncing failed: ${JSON.stringify({
-          height: this.currentBlock,
-          at: new Date(),
-        })}`,
-        e,
-      );
+    } catch (e: any) {
+      this.logger?.error(`[Tracker] failed: height ${this.currentBlock.number} error: ${e?.message}, at: ${new Date()}`, e);
       await this.failed(this.currentBlock);
       this.sleep(this.interval);
       this.isSyncing = false;
