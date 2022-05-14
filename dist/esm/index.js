@@ -10,7 +10,7 @@ class Tracker {
         this.stopped = false;
         this.enable = (options === null || options === void 0 ? void 0 : options.enable) || false;
         this.logger = options.logger || console;
-        this.startBlock = options.startBlock;
+        this.startBlock = options.startBlock || -1;
         this.interval = options.interval || 0;
         this.concurrency = options.concurrency || 1;
         this.behind = options.behind || 0;
@@ -33,9 +33,12 @@ class Tracker {
         throw new Error('Please implement doRollback function');
     }
     async prepare() {
-        var _a, _b;
         const block = await this.localAdapter.getLatestBlock();
-        const number = (_b = (_a = this.startBlock) !== null && _a !== void 0 ? _a : block === null || block === void 0 ? void 0 : block.number) !== null && _b !== void 0 ? _b : -1;
+        // start from the latest block
+        let number = this.startBlock || -1;
+        if ((block === null || block === void 0 ? void 0 : block.number) && block.number > number)
+            number = block.number;
+        this.logger.debug(`[Tracker] Start from block: ${number}`);
         this._currentBlock = await this.remoteAdapter.getBlockByNumber(number + 1);
         this._remoteBlock = await this.remoteAdapter.getLatestBlock();
     }

@@ -984,7 +984,7 @@
 	    this.stopped = false;
 	    this.enable = (options === null || options === void 0 ? void 0 : options.enable) || false;
 	    this.logger = options.logger || console;
-	    this.startBlock = options.startBlock;
+	    this.startBlock = options.startBlock || -1;
 	    this.interval = options.interval || 0;
 	    this.concurrency = options.concurrency || 1;
 	    this.behind = options.behind || 0;
@@ -1038,8 +1038,7 @@
 	    key: "prepare",
 	    value: function () {
 	      var _prepare = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee2() {
-	        var _a, _b, block, number;
-
+	        var block, number;
 	        return _regeneratorRuntime.wrap(function _callee2$(_context2) {
 	          while (1) {
 	            switch (_context2.prev = _context2.next) {
@@ -1049,19 +1048,22 @@
 
 	              case 2:
 	                block = _context2.sent;
-	                number = (_b = (_a = this.startBlock) !== null && _a !== void 0 ? _a : block === null || block === void 0 ? void 0 : block.number) !== null && _b !== void 0 ? _b : -1;
-	                _context2.next = 6;
+	                // start from the latest block
+	                number = this.startBlock || -1;
+	                if ((block === null || block === void 0 ? void 0 : block.number) && block.number > number) number = block.number;
+	                this.logger.debug("[Tracker] Start from block: ".concat(number));
+	                _context2.next = 8;
 	                return this.remoteAdapter.getBlockByNumber(number + 1);
 
-	              case 6:
+	              case 8:
 	                this._currentBlock = _context2.sent;
-	                _context2.next = 9;
+	                _context2.next = 11;
 	                return this.remoteAdapter.getLatestBlock();
 
-	              case 9:
+	              case 11:
 	                this._remoteBlock = _context2.sent;
 
-	              case 10:
+	              case 12:
 	              case "end":
 	                return _context2.stop();
 	            }

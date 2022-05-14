@@ -21,7 +21,7 @@ export class Tracker {
   concurrency: number;
   behind: number;
 
-  startBlock?: number;
+  startBlock: number;
 
   _currentBlock?: IBlock;
   _remoteBlock?: IBlock;
@@ -34,7 +34,7 @@ export class Tracker {
     this.stopped = false;
     this.enable = options?.enable || false;
     this.logger = options.logger || console;
-    this.startBlock = options.startBlock;
+    this.startBlock = options.startBlock || -1;
     this.interval = options.interval || 0;
     this.concurrency = options.concurrency || 1;
     this.behind = options.behind || 0;
@@ -62,7 +62,11 @@ export class Tracker {
 
   async prepare() {
     const block = await this.localAdapter.getLatestBlock();
-    const number = this.startBlock ?? block?.number ?? -1;
+    // start from the latest block
+    let number = this.startBlock || -1;
+    if (block?.number && block.number > number) number = block.number;
+
+    this.logger.debug(`[Tracker] Start from block: ${number}`);
     this._currentBlock = await this.remoteAdapter.getBlockByNumber(number + 1);
     this._remoteBlock = await this.remoteAdapter.getLatestBlock();
   }

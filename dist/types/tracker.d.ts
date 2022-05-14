@@ -18,7 +18,7 @@ export declare class Tracker {
     interval: number;
     concurrency: number;
     behind: number;
-    startBlock?: number;
+    startBlock: number;
     _currentBlock?: IBlock;
     _remoteBlock?: IBlock;
     localAdapter: LocalAdapter<IBlock>;
