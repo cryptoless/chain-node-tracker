@@ -3,7 +3,7 @@ import { RemoteAdapter, LocalAdapter } from './adapter';
 
 export interface Options {
   enable?: boolean;
-  logger?: Console;
+  logger?: any;
   startBlock?: number;
   interval?: number;
   concurrency?: number;
@@ -13,7 +13,7 @@ export interface Options {
 }
 
 export class Tracker {
-  logger: Console;
+  logger: any;
   isSyncing: boolean;
   stopped: boolean;
   enable: boolean;
@@ -62,8 +62,8 @@ export class Tracker {
 
   async prepare() {
     const block = await this.localAdapter.getLatestBlock();
-    const number = block?.number ?? -1;
-    this._currentBlock = await this.localAdapter.getBlockByNumber(number + 1);
+    const number = this.startBlock ?? block?.number ?? -1;
+    this._currentBlock = await this.remoteAdapter.getBlockByNumber(number + 1);
     this._remoteBlock = await this.remoteAdapter.getLatestBlock();
   }
 
@@ -114,9 +114,7 @@ export class Tracker {
     if (!this.currentBlock.number) {
       return result;
     }
-
-    if (this.startBlock && this.currentBlock.number < this.startBlock) {
-      this.currentBlock.number = this.startBlock;
+    if (this.startBlock && this._currentBlock?.number === this.startBlock + 1) {
       return result;
     }
 
@@ -187,20 +185,20 @@ export class Tracker {
       const distance = this.remoteBlock.number - this.behind - this.currentBlock.number + 1;
       const needed = Math.min(Math.max(distance, 1), this.concurrency);
       if (distance < 0) {
-        this.logger.info(`[Tracker] Refresh... ${this.remoteBlock.number} -> ${this.remoteBlock.number}, will sleep ${this.interval}`);
+        this.logger.info(`[Tracker] Refresh... ${this.currentBlock.number} -> ${this.remoteBlock.number}, will sleep ${this.interval}`);
         this._remoteBlock = await this.remoteAdapter.getLatestBlock();
         await this.sleep(this.interval);
         this.isSyncing = false;
         return;
       }
 
-      this.logger.info(`[Tracker] Ing... ${this.remoteBlock.number} -> ${this.remoteBlock.number} behind ${distance}, will sync ${needed} blocks at ${new Date()}`);
+      this.logger.info(`[Tracker] Ing... ${this.currentBlock.number} -> ${this.remoteBlock.number} behind ${distance}, will sync ${needed} blocks at ${new Date()}`);
 
       this._currentBlock = await this.succeeded(this.currentBlock, needed);
       this.isSyncing = false;
       return;
     } catch (e: any) {
-      this.logger?.error(`[Tracker] failed: height ${this.currentBlock.number} error: ${e?.message}, at: ${new Date()}`, e);
+      this.logger?.error(e, `[Tracker] failed: height ${this.currentBlock.number} at: ${new Date()}`);
       await this.failed(this.currentBlock);
       this.sleep(this.interval);
       this.isSyncing = false;
