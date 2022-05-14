@@ -8,7 +8,8 @@
   "browser": "dist/umd/index.js",
   "typings": "dist/types/index.d.ts",
   "files": [
-    "src"
+    "src",
+    "dist"
   ],
   "author": "peng-huang-ch <h499871809@gmail.com>",
   "repository": {
@@ -27,11 +28,7 @@
     "build:rollup": "npx rollup -c rollup.config.ts",
     "start": "npx rollup -c rollup.config.ts -w",
     "test": "jest --coverage",
-    "test:watch": "jest --coverage --watch",
-    "test:prod": "npm run lint && npm run test -- --no-cache",
-    "commit": "git-cz",
-    "semantic-release": "semantic-release",
-    "precommit": "lint-staged"
+    "test:watch": "jest --coverage --watch"
   },
   "lint-staged": {
     "{src,test}/**/*.ts": [
