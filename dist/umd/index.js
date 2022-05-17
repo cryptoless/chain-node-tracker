@@ -1356,7 +1356,7 @@
 	          while (1) {
 	            switch (_context11.prev = _context11.next) {
 	              case 0:
-	                this.logger.info("[Tracker] Stopping worker for chain at: ".concat(new Date()));
+	                this.logger.info("[Tracker] Stopping worker for chain at: ".concat(new Date().toISOString()));
 	                this.stopped = true;
 	                this.isSyncing = false;
 
@@ -1490,7 +1490,7 @@
 
 	              case 28:
 	                this._currentBlock = _context13.sent;
-	                this.logger.info("[Tracker] Rollback... rollback ".concat(rollback.synced, ", current ").concat(this.currentBlock, ", latest ").concat(this.remoteBlock, " at ").concat(new Date()));
+	                this.logger.info("[Tracker] Rollback... rollback ".concat(rollback.synced, ", current ").concat(this.currentBlock, ", latest ").concat(this.remoteBlock, " at ").concat(new Date().toISOString()));
 	                this.isSyncing = false;
 	                return _context13.abrupt("return");
 
@@ -1517,7 +1517,7 @@
 	                return _context13.abrupt("return");
 
 	              case 43:
-	                this.logger.info("[Tracker] Ing... ".concat(this.currentBlock.number, " -> ").concat(this.remoteBlock.number, " behind ").concat(distance, ", will sync ").concat(needed, " blocks at ").concat(new Date()));
+	                this.logger.info("[Tracker] Ing... ".concat(this.currentBlock.number, " -> ").concat(this.remoteBlock.number, " behind ").concat(distance, ", will sync ").concat(needed, " blocks at ").concat(new Date().toISOString()));
 	                _context13.next = 46;
 	                return this.succeeded(this.currentBlock, needed);
 
@@ -1529,7 +1529,7 @@
 	              case 51:
 	                _context13.prev = 51;
 	                _context13.t0 = _context13["catch"](2);
-	                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.error(_context13.t0, "[Tracker] failed: height ".concat(this.currentBlock.number, " at: ").concat(new Date()));
+	                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.error(_context13.t0, "[Tracker] failed: height ".concat(this.currentBlock.number, " at: ").concat(new Date().toISOString()));
 	                _context13.next = 56;
 	                return this.failed(this.currentBlock);
 

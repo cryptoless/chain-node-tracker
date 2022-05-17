@@ -107,7 +107,7 @@ class Tracker {
         return this.startSync();
     }
     async stop() {
-        this.logger.info(`[Tracker] Stopping worker for chain at: ${new Date()}`);
+        this.logger.info(`[Tracker] Stopping worker for chain at: ${new Date().toISOString()}`);
         this.stopped = true;
         this.isSyncing = false;
     }
@@ -140,7 +140,7 @@ class Tracker {
                 if (!rollback.synced || !rollback.remote)
                     throw new Error('rollback synced or remote is undefined');
                 this._currentBlock = await this.doRollback(rollback.synced, rollback.remote);
-                this.logger.info(`[Tracker] Rollback... rollback ${rollback.synced}, current ${this.currentBlock}, latest ${this.remoteBlock} at ${new Date()}`);
+                this.logger.info(`[Tracker] Rollback... rollback ${rollback.synced}, current ${this.currentBlock}, latest ${this.remoteBlock} at ${new Date().toISOString()}`);
                 this.isSyncing = false;
                 return;
             }
@@ -153,13 +153,13 @@ class Tracker {
                 this.isSyncing = false;
                 return;
             }
-            this.logger.info(`[Tracker] Ing... ${this.currentBlock.number} -> ${this.remoteBlock.number} behind ${distance}, will sync ${needed} blocks at ${new Date()}`);
+            this.logger.info(`[Tracker] Ing... ${this.currentBlock.number} -> ${this.remoteBlock.number} behind ${distance}, will sync ${needed} blocks at ${new Date().toISOString()}`);
             this._currentBlock = await this.succeeded(this.currentBlock, needed);
             this.isSyncing = false;
             return;
         }
         catch (e) {
-            (_b = this.logger) === null || _b === void 0 ? void 0 : _b.error(e, `[Tracker] failed: height ${this.currentBlock.number} at: ${new Date()}`);
+            (_b = this.logger) === null || _b === void 0 ? void 0 : _b.error(e, `[Tracker] failed: height ${this.currentBlock.number} at: ${new Date().toISOString()}`);
             await this.failed(this.currentBlock);
             this.sleep(this.interval);
             this.isSyncing = false;
