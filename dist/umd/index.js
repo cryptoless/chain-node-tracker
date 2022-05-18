@@ -1412,7 +1412,7 @@
 	    key: "loop",
 	    value: function () {
 	      var _loop = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee13() {
-	        var _a, _b, shouldPause, rollback, distance, needed;
+	        var _a, _b, shouldPause, distance, needed, rollback;
 
 	        return _regeneratorRuntime.wrap(function _callee13$(_context13) {
 	          while (1) {
@@ -1446,73 +1446,73 @@
 
 	              case 10:
 	                this.isSyncing = true;
-	                _context13.next = 13;
+	                distance = this.remoteBlock.number - this.behind - this.currentBlock.number + 1;
+	                needed = Math.min(Math.max(distance, 1), this.concurrency);
+
+	                if (!(distance < 0)) {
+	                  _context13.next = 22;
+	                  break;
+	                }
+
+	                this.logger.info("[Tracker] Refresh... ".concat(this.currentBlock.number, " -> ").concat(this.remoteBlock.number, ", will sleep ").concat(this.interval));
+	                _context13.next = 17;
+	                return this.remoteAdapter.getLatestBlock();
+
+	              case 17:
+	                this._remoteBlock = _context13.sent;
+	                _context13.next = 20;
+	                return this.sleep(this.interval);
+
+	              case 20:
+	                this.isSyncing = false;
+	                return _context13.abrupt("return");
+
+	              case 22:
+	                _context13.next = 24;
 	                return this.refreshBlock(this.currentBlock);
 
-	              case 13:
+	              case 24:
 	                this._currentBlock = _context13.sent;
 
 	                if ((_a = this._currentBlock) === null || _a === void 0 ? void 0 : _a.hash) {
-	                  _context13.next = 20;
+	                  _context13.next = 31;
 	                  break;
 	                }
 
 	                this.logger.info("[Tracker] Refresh block failed, current block: ".concat(this.currentBlock.number));
-	                _context13.next = 18;
+	                _context13.next = 29;
 	                return this.sleep(this.interval);
 
-	              case 18:
+	              case 29:
 	                this.isSyncing = false;
 	                return _context13.abrupt("return");
 
-	              case 20:
-	                _context13.next = 22;
+	              case 31:
+	                _context13.next = 33;
 	                return this.shouldRollback();
 
-	              case 22:
+	              case 33:
 	                rollback = _context13.sent;
 
 	                if (!rollback.rollback) {
-	                  _context13.next = 32;
+	                  _context13.next = 43;
 	                  break;
 	                }
 
 	                if (!(!rollback.synced || !rollback.remote)) {
-	                  _context13.next = 26;
+	                  _context13.next = 37;
 	                  break;
 	                }
 
 	                throw new Error('rollback synced or remote is undefined');
 
-	              case 26:
-	                _context13.next = 28;
+	              case 37:
+	                _context13.next = 39;
 	                return this.doRollback(rollback.synced, rollback.remote);
 
-	              case 28:
+	              case 39:
 	                this._currentBlock = _context13.sent;
 	                this.logger.info("[Tracker] Rollback... rollback ".concat(rollback.synced, ", current ").concat(this.currentBlock, ", latest ").concat(this.remoteBlock, " at ").concat(new Date().toISOString()));
-	                this.isSyncing = false;
-	                return _context13.abrupt("return");
-
-	              case 32:
-	                distance = this.remoteBlock.number - this.behind - this.currentBlock.number + 1;
-	                needed = Math.min(Math.max(distance, 1), this.concurrency);
-
-	                if (!(distance < 0)) {
-	                  _context13.next = 43;
-	                  break;
-	                }
-
-	                this.logger.info("[Tracker] Refresh... ".concat(this.currentBlock.number, " -> ").concat(this.remoteBlock.number, ", will sleep ").concat(this.interval));
-	                _context13.next = 38;
-	                return this.remoteAdapter.getLatestBlock();
-
-	              case 38:
-	                this._remoteBlock = _context13.sent;
-	                _context13.next = 41;
-	                return this.sleep(this.interval);
-
-	              case 41:
 	                this.isSyncing = false;
 	                return _context13.abrupt("return");
 
