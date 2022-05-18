@@ -168,8 +168,17 @@ export class Tracker {
         return;
       }
       this.isSyncing = true;
-      this._currentBlock = await this.refreshBlock(this.currentBlock);
+      const distance = this.remoteBlock.number - this.behind - this.currentBlock.number + 1;
+      const needed = Math.min(Math.max(distance, 1), this.concurrency);
+      if (distance < 0) {
+        this.logger.info(`[Tracker] Refresh... ${this.currentBlock.number} -> ${this.remoteBlock.number}, will sleep ${this.interval}`);
+        this._remoteBlock = await this.remoteAdapter.getLatestBlock();
+        await this.sleep(this.interval);
+        this.isSyncing = false;
+        return;
+      }
 
+      this._currentBlock = await this.refreshBlock(this.currentBlock);
       if (!this._currentBlock?.hash) {
         this.logger.info(`[Tracker] Refresh block failed, current block: ${this.currentBlock.number}`);
         await this.sleep(this.interval);
@@ -182,16 +191,6 @@ export class Tracker {
         if (!rollback.synced || !rollback.remote) throw new Error('rollback synced or remote is undefined');
         this._currentBlock = await this.doRollback(rollback.synced, rollback.remote);
         this.logger.info(`[Tracker] Rollback... rollback ${rollback.synced}, current ${this.currentBlock}, latest ${this.remoteBlock} at ${new Date().toISOString()}`);
-        this.isSyncing = false;
-        return;
-      }
-
-      const distance = this.remoteBlock.number - this.behind - this.currentBlock.number + 1;
-      const needed = Math.min(Math.max(distance, 1), this.concurrency);
-      if (distance < 0) {
-        this.logger.info(`[Tracker] Refresh... ${this.currentBlock.number} -> ${this.remoteBlock.number}, will sleep ${this.interval}`);
-        this._remoteBlock = await this.remoteAdapter.getLatestBlock();
-        await this.sleep(this.interval);
         this.isSyncing = false;
         return;
       }
