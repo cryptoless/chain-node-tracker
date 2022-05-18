@@ -67,7 +67,7 @@ export class Tracker {
     if (block?.number && block.number > number) number = block.number;
 
     this.logger.debug(`[Tracker] Start from block: ${number}`);
-    this._currentBlock = await this.remoteAdapter.getBlockByNumber(number + 1);
+    this._currentBlock = { number: number + 1, hash: '', time: new Date() };
     this._remoteBlock = await this.remoteAdapter.getLatestBlock();
   }
 

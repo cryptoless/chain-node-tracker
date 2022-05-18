@@ -1052,18 +1052,18 @@
 	                number = this.startBlock || -1;
 	                if ((block === null || block === void 0 ? void 0 : block.number) && block.number > number) number = block.number;
 	                this.logger.debug("[Tracker] Start from block: ".concat(number));
-	                _context2.next = 8;
-	                return this.remoteAdapter.getBlockByNumber(number + 1);
-
-	              case 8:
-	                this._currentBlock = _context2.sent;
-	                _context2.next = 11;
+	                this._currentBlock = {
+	                  number: number + 1,
+	                  hash: '',
+	                  time: new Date()
+	                };
+	                _context2.next = 9;
 	                return this.remoteAdapter.getLatestBlock();
 
-	              case 11:
+	              case 9:
 	                this._remoteBlock = _context2.sent;
 
-	              case 12:
+	              case 10:
 	              case "end":
 	                return _context2.stop();
 	            }
