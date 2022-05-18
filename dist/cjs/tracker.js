@@ -126,7 +126,7 @@ class Tracker {
                 return;
             }
             this.isSyncing = true;
-            const distance = this.remoteBlock.number - this.behind - this.currentBlock.number + 1;
+            const distance = this.remoteBlock.number - this.currentBlock.number - this.behind;
             const needed = Math.min(Math.max(distance, 1), this.concurrency);
             if (distance < 0) {
                 this.logger.info(`[Tracker] Refresh... ${this.currentBlock.number} -> ${this.remoteBlock.number}, will sleep ${this.interval}`);

@@ -1446,7 +1446,7 @@
 
 	              case 10:
 	                this.isSyncing = true;
-	                distance = this.remoteBlock.number - this.behind - this.currentBlock.number + 1;
+	                distance = this.remoteBlock.number - this.currentBlock.number - this.behind;
 	                needed = Math.min(Math.max(distance, 1), this.concurrency);
 
 	                if (!(distance < 0)) {
