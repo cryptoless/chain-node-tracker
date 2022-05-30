@@ -976,15 +976,19 @@
 
 	var _regeneratorRuntime = /*@__PURE__*/getDefaultExportFromCjs(regenerator.exports);
 
+	// (startBlock, endBlock]
 	var Tracker = /*#__PURE__*/function () {
 	  function Tracker(options) {
 	    _classCallCheck(this, Tracker);
 
+	    this.name = options.name || Tracker.name;
 	    this.isSyncing = false;
 	    this.stopped = false;
+	    this.step = options.step || 1;
 	    this.enable = (options === null || options === void 0 ? void 0 : options.enable) || false;
 	    this.logger = options.logger || console;
 	    this.startBlock = options.startBlock || -1;
+	    this.endBlock = options.endBlock || 0;
 	    this.interval = options.interval || 0;
 	    this.concurrency = options.concurrency || 1;
 	    this.behind = options.behind || 0;
@@ -1051,7 +1055,7 @@
 	                // start from the latest block
 	                number = this.startBlock || -1;
 	                if ((block === null || block === void 0 ? void 0 : block.number) && block.number > number) number = block.number;
-	                this.logger.debug("[Tracker] Start from block: ".concat(number));
+	                this.logger.debug("[".concat(this.name, "] Start from block: ").concat(number));
 	                this._currentBlock = {
 	                  number: number + 1,
 	                  hash: '',
@@ -1086,15 +1090,14 @@
 	  }, {
 	    key: "succeeded",
 	    value: function () {
-	      var _succeeded = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee3(_block) {
-
+	      var _succeeded = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee3(_block, _blocks) {
 	        return _regeneratorRuntime.wrap(function _callee3$(_context3) {
 	          while (1) {
 	            switch (_context3.prev = _context3.next) {
 	              case 0:
 	                throw new Error('Please implement succeeded function');
 
-	              case 2:
+	              case 1:
 	              case "end":
 	                return _context3.stop();
 	            }
@@ -1102,7 +1105,7 @@
 	        }, _callee3);
 	      }));
 
-	      function succeeded(_x3) {
+	      function succeeded(_x3, _x4) {
 	        return _succeeded.apply(this, arguments);
 	      }
 
@@ -1132,7 +1135,7 @@
 	        }, _callee4);
 	      }));
 
-	      function failed(_x4) {
+	      function failed(_x5) {
 	        return _failed.apply(this, arguments);
 	      }
 
@@ -1161,7 +1164,7 @@
 	        }, _callee5);
 	      }));
 
-	      function sleep(_x5) {
+	      function sleep(_x6) {
 	        return _sleep.apply(this, arguments);
 	      }
 
@@ -1193,7 +1196,7 @@
 	        }, _callee6, this);
 	      }));
 
-	      function refreshBlock(_x6) {
+	      function refreshBlock(_x7) {
 	        return _refreshBlock.apply(this, arguments);
 	      }
 
@@ -1202,22 +1205,24 @@
 	  }, {
 	    key: "pause",
 	    value: function () {
-	      var _pause = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee7(_blockNumber) {
+	      var _pause = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee7(blockNumber) {
 	        return _regeneratorRuntime.wrap(function _callee7$(_context7) {
 	          while (1) {
 	            switch (_context7.prev = _context7.next) {
 	              case 0:
-	                return _context7.abrupt("return", false);
+	                return _context7.abrupt("return", this.startBlock && this.startBlock > 0 && this.startBlock < blockNumber || // head block
+	                this.endBlock && this.endBlock > 0 && blockNumber > this.endBlock // tail block
+	                );
 
 	              case 1:
 	              case "end":
 	                return _context7.stop();
 	            }
 	          }
-	        }, _callee7);
+	        }, _callee7, this);
 	      }));
 
-	      function pause(_x7) {
+	      function pause(_x8) {
 	        return _pause.apply(this, arguments);
 	      }
 
@@ -1226,37 +1231,78 @@
 	  }, {
 	    key: "doPause",
 	    value: function () {
-	      var _doPause = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee8() {
+	      var _doPause = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee8(blockNumber) {
 	        return _regeneratorRuntime.wrap(function _callee8$(_context8) {
 	          while (1) {
 	            switch (_context8.prev = _context8.next) {
 	              case 0:
-	                return _context8.abrupt("return");
+	                this.logger.info("[".concat(this.name, "] Pause worker for chain at: ").concat(new Date().toISOString(), " block ").concat(blockNumber));
+	                return _context8.abrupt("return", this.stop());
 
-	              case 1:
+	              case 2:
 	              case "end":
 	                return _context8.stop();
 	            }
 	          }
-	        }, _callee8);
+	        }, _callee8, this);
 	      }));
 
-	      function doPause() {
+	      function doPause(_x9) {
 	        return _doPause.apply(this, arguments);
 	      }
 
 	      return doPause;
+	    }()
+	  }, {
+	    key: "compareSyncedAndRemoteBlocks",
+	    value: function () {
+	      var _compareSyncedAndRemoteBlocks = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee9(blockNumber) {
+	        var _yield$Promise$all, _yield$Promise$all2, synced, remote, equal;
+
+	        return _regeneratorRuntime.wrap(function _callee9$(_context9) {
+	          while (1) {
+	            switch (_context9.prev = _context9.next) {
+	              case 0:
+	                _context9.next = 2;
+	                return Promise.all([this.localAdapter.getBlockByNumber(blockNumber), this.remoteAdapter.getBlockByNumber(blockNumber) // remote
+	                ]);
+
+	              case 2:
+	                _yield$Promise$all = _context9.sent;
+	                _yield$Promise$all2 = _slicedToArray(_yield$Promise$all, 2);
+	                synced = _yield$Promise$all2[0];
+	                remote = _yield$Promise$all2[1];
+	                equal = synced && remote && synced.number == remote.number && synced.hash === remote.hash;
+	                return _context9.abrupt("return", {
+	                  equal: equal,
+	                  synced: synced,
+	                  remote: remote
+	                });
+
+	              case 8:
+	              case "end":
+	                return _context9.stop();
+	            }
+	          }
+	        }, _callee9, this);
+	      }));
+
+	      function compareSyncedAndRemoteBlocks(_x10) {
+	        return _compareSyncedAndRemoteBlocks.apply(this, arguments);
+	      }
+
+	      return compareSyncedAndRemoteBlocks;
 	    }() // previous block hash is changes, need to rollback
 
 	  }, {
 	    key: "shouldRollback",
 	    value: function () {
-	      var _shouldRollback = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee9() {
-	        var _a, result, blockNumber, _yield$Promise$all, _yield$Promise$all2, synced, remote;
+	      var _shouldRollback = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee10() {
+	        var _a, _b, result, blockNumber, _yield$this$compareSy, equal, synced, remote;
 
-	        return _regeneratorRuntime.wrap(function _callee9$(_context9) {
+	        return _regeneratorRuntime.wrap(function _callee10$(_context10) {
 	          while (1) {
-	            switch (_context9.prev = _context9.next) {
+	            switch (_context10.prev = _context10.next) {
 	              case 0:
 	                result = {
 	                  rollback: false,
@@ -1264,44 +1310,43 @@
 	                  remote: undefined
 	                };
 
-	                if (this.currentBlock.number) {
-	                  _context9.next = 3;
+	                if ((_a = this._currentBlock) === null || _a === void 0 ? void 0 : _a.number) {
+	                  _context10.next = 3;
 	                  break;
 	                }
 
-	                return _context9.abrupt("return", result);
+	                return _context10.abrupt("return", result);
 
 	              case 3:
-	                if (!(this.startBlock && ((_a = this._currentBlock) === null || _a === void 0 ? void 0 : _a.number) === this.startBlock + 1)) {
-	                  _context9.next = 5;
+	                if (!(this.startBlock && ((_b = this._currentBlock) === null || _b === void 0 ? void 0 : _b.number) === this.startBlock + this.step)) {
+	                  _context10.next = 5;
 	                  break;
 	                }
 
-	                return _context9.abrupt("return", result);
+	                return _context10.abrupt("return", result);
 
 	              case 5:
-	                blockNumber = this.currentBlock.number - 1;
-	                _context9.next = 8;
-	                return Promise.all([this.localAdapter.getBlockByNumber(blockNumber), this.remoteAdapter.getBlockByNumber(blockNumber) // remote
-	                ]);
+	                blockNumber = this.currentBlock.number - this.step;
+	                _context10.next = 8;
+	                return this.compareSyncedAndRemoteBlocks(blockNumber);
 
 	              case 8:
-	                _yield$Promise$all = _context9.sent;
-	                _yield$Promise$all2 = _slicedToArray(_yield$Promise$all, 2);
-	                synced = _yield$Promise$all2[0];
-	                remote = _yield$Promise$all2[1];
-	                return _context9.abrupt("return", {
-	                  rollback: (synced === null || synced === void 0 ? void 0 : synced.hash) === (remote === null || remote === void 0 ? void 0 : remote.hash) && !(remote === null || remote === void 0 ? void 0 : remote.hash),
+	                _yield$this$compareSy = _context10.sent;
+	                equal = _yield$this$compareSy.equal;
+	                synced = _yield$this$compareSy.synced;
+	                remote = _yield$this$compareSy.remote;
+	                return _context10.abrupt("return", {
+	                  rollback: (synced === null || synced === void 0 ? void 0 : synced.hash) && !equal,
 	                  synced: synced,
 	                  remote: remote
 	                });
 
 	              case 13:
 	              case "end":
-	                return _context9.stop();
+	                return _context10.stop();
 	            }
 	          }
-	        }, _callee9, this);
+	        }, _callee10, this);
 	      }));
 
 	      function shouldRollback() {
@@ -1313,33 +1358,33 @@
 	  }, {
 	    key: "start",
 	    value: function () {
-	      var _start = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee10() {
-	        return _regeneratorRuntime.wrap(function _callee10$(_context10) {
+	      var _start = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee11() {
+	        return _regeneratorRuntime.wrap(function _callee11$(_context11) {
 	          while (1) {
-	            switch (_context10.prev = _context10.next) {
+	            switch (_context11.prev = _context11.next) {
 	              case 0:
 	                if (!this.disable) {
-	                  _context10.next = 3;
+	                  _context11.next = 3;
 	                  break;
 	                }
 
-	                this.logger.info("[Tracker]  Disable ".concat(this.constructor.name));
-	                return _context10.abrupt("return");
+	                this.logger.info("[".concat(this.name, "] Disable ").concat(this.constructor.name));
+	                return _context11.abrupt("return");
 
 	              case 3:
 	                this.stopped = false;
-	                _context10.next = 6;
+	                _context11.next = 6;
 	                return this.prepare();
 
 	              case 6:
-	                return _context10.abrupt("return", this.startSync());
+	                return _context11.abrupt("return", this.startSync());
 
 	              case 7:
 	              case "end":
-	                return _context10.stop();
+	                return _context11.stop();
 	            }
 	          }
-	        }, _callee10, this);
+	        }, _callee11, this);
 	      }));
 
 	      function start() {
@@ -1351,21 +1396,21 @@
 	  }, {
 	    key: "stop",
 	    value: function () {
-	      var _stop = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee11() {
-	        return _regeneratorRuntime.wrap(function _callee11$(_context11) {
+	      var _stop = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee12() {
+	        return _regeneratorRuntime.wrap(function _callee12$(_context12) {
 	          while (1) {
-	            switch (_context11.prev = _context11.next) {
+	            switch (_context12.prev = _context12.next) {
 	              case 0:
-	                this.logger.info("[Tracker] Stopping worker for chain at: ".concat(new Date().toISOString()));
+	                this.logger.info("[".concat(this.name, "] Stopping worker for chain at: ").concat(new Date().toISOString()));
 	                this.stopped = true;
 	                this.isSyncing = false;
 
 	              case 3:
 	              case "end":
-	                return _context11.stop();
+	                return _context12.stop();
 	            }
 	          }
-	        }, _callee11, this);
+	        }, _callee12, this);
 	      }));
 
 	      function stop() {
@@ -1377,29 +1422,29 @@
 	  }, {
 	    key: "startSync",
 	    value: function () {
-	      var _startSync = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee12() {
-	        return _regeneratorRuntime.wrap(function _callee12$(_context12) {
+	      var _startSync = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee13() {
+	        return _regeneratorRuntime.wrap(function _callee13$(_context13) {
 	          while (1) {
-	            switch (_context12.prev = _context12.next) {
+	            switch (_context13.prev = _context13.next) {
 	              case 0:
 	                if (this.stopped) {
-	                  _context12.next = 5;
+	                  _context13.next = 5;
 	                  break;
 	                }
 
-	                _context12.next = 3;
+	                _context13.next = 3;
 	                return this.loop().catch(this.logger.error);
 
 	              case 3:
-	                _context12.next = 0;
+	                _context13.next = 0;
 	                break;
 
 	              case 5:
 	              case "end":
-	                return _context12.stop();
+	                return _context13.stop();
 	            }
 	          }
-	        }, _callee12, this);
+	        }, _callee13, this);
 	      }));
 
 	      function startSync() {
@@ -1411,139 +1456,150 @@
 	  }, {
 	    key: "loop",
 	    value: function () {
-	      var _loop = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee13() {
-	        var _a, _b, shouldPause, distance, needed, rollback;
+	      var _loop = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee14() {
+	        var _this = this;
 
-	        return _regeneratorRuntime.wrap(function _callee13$(_context13) {
+	        var _a, _b, currentBlockNumber, remoteBlockNumber, now, shouldPause, distance, needed, _yield$this$shouldRol, rollback, synced, remote, blocks;
+
+	        return _regeneratorRuntime.wrap(function _callee14$(_context14) {
 	          while (1) {
-	            switch (_context13.prev = _context13.next) {
+	            switch (_context14.prev = _context14.next) {
 	              case 0:
 	                if (!this.isSyncing) {
-	                  _context13.next = 2;
+	                  _context14.next = 2;
 	                  break;
 	                }
 
-	                return _context13.abrupt("return");
+	                return _context14.abrupt("return");
 
 	              case 2:
-	                _context13.prev = 2;
-	                _context13.next = 5;
-	                return this.pause();
+	                currentBlockNumber = this.currentBlock.number;
+	                remoteBlockNumber = this.remoteBlock.number;
+	                now = new Date().toISOString();
+	                _context14.prev = 5;
+	                _context14.next = 8;
+	                return this.pause(currentBlockNumber);
 
-	              case 5:
-	                shouldPause = _context13.sent;
+	              case 8:
+	                shouldPause = _context14.sent;
 
 	                if (!shouldPause) {
-	                  _context13.next = 10;
+	                  _context14.next = 13;
 	                  break;
 	                }
 
-	                _context13.next = 9;
-	                return this.doPause();
+	                _context14.next = 12;
+	                return this.doPause(currentBlockNumber);
 
-	              case 9:
-	                return _context13.abrupt("return");
+	              case 12:
+	                return _context14.abrupt("return");
 
-	              case 10:
+	              case 13:
 	                this.isSyncing = true;
-	                distance = this.remoteBlock.number - this.currentBlock.number - this.behind;
+	                distance = this.step > 0 ? remoteBlockNumber - currentBlockNumber - this.behind : currentBlockNumber;
 	                needed = Math.min(Math.max(distance, 1), this.concurrency);
 
 	                if (!(distance < 0)) {
-	                  _context13.next = 22;
+	                  _context14.next = 25;
 	                  break;
 	                }
 
-	                this.logger.info("[Tracker] Refresh... ".concat(this.currentBlock.number, " -> ").concat(this.remoteBlock.number, ", will sleep ").concat(this.interval));
-	                _context13.next = 17;
+	                this.logger.info("[".concat(this.name, "] Refresh... ").concat(currentBlockNumber, " -> ").concat(remoteBlockNumber, ", will sleep ").concat(this.interval));
+	                _context14.next = 20;
 	                return this.remoteAdapter.getLatestBlock();
 
-	              case 17:
-	                this._remoteBlock = _context13.sent;
-	                _context13.next = 20;
+	              case 20:
+	                this._remoteBlock = _context14.sent;
+	                _context14.next = 23;
 	                return this.sleep(this.interval);
 
-	              case 20:
+	              case 23:
 	                this.isSyncing = false;
-	                return _context13.abrupt("return");
+	                return _context14.abrupt("return");
 
-	              case 22:
-	                _context13.next = 24;
+	              case 25:
+	                _context14.next = 27;
 	                return this.refreshBlock(this.currentBlock);
 
-	              case 24:
-	                this._currentBlock = _context13.sent;
+	              case 27:
+	                this._currentBlock = _context14.sent;
 
 	                if ((_a = this._currentBlock) === null || _a === void 0 ? void 0 : _a.hash) {
-	                  _context13.next = 31;
+	                  _context14.next = 34;
 	                  break;
 	                }
 
-	                this.logger.info("[Tracker] Refresh block failed, current block: ".concat(this.currentBlock.number));
-	                _context13.next = 29;
+	                this.logger.info("[".concat(this.name, "] Refresh block failed, current block: ").concat(currentBlockNumber));
+	                _context14.next = 32;
 	                return this.sleep(this.interval);
 
-	              case 29:
+	              case 32:
 	                this.isSyncing = false;
-	                return _context13.abrupt("return");
+	                return _context14.abrupt("return");
 
-	              case 31:
-	                _context13.next = 33;
+	              case 34:
+	                _context14.next = 36;
 	                return this.shouldRollback();
 
-	              case 33:
-	                rollback = _context13.sent;
+	              case 36:
+	                _yield$this$shouldRol = _context14.sent;
+	                rollback = _yield$this$shouldRol.rollback;
+	                synced = _yield$this$shouldRol.synced;
+	                remote = _yield$this$shouldRol.remote;
 
-	                if (!rollback.rollback) {
-	                  _context13.next = 43;
+	                if (!rollback) {
+	                  _context14.next = 49;
 	                  break;
 	                }
 
-	                if (!(!rollback.synced || !rollback.remote)) {
-	                  _context13.next = 37;
+	                if (!(!synced || !remote)) {
+	                  _context14.next = 43;
 	                  break;
 	                }
 
 	                throw new Error('rollback synced or remote is undefined');
 
-	              case 37:
-	                _context13.next = 39;
-	                return this.doRollback(rollback.synced, rollback.remote);
-
-	              case 39:
-	                this._currentBlock = _context13.sent;
-	                this.logger.info("[Tracker] Rollback... rollback ".concat(rollback.synced, ", current ").concat(this.currentBlock, ", latest ").concat(this.remoteBlock, " at ").concat(new Date().toISOString()));
-	                this.isSyncing = false;
-	                return _context13.abrupt("return");
-
 	              case 43:
-	                this.logger.info("[Tracker] Ing... ".concat(this.currentBlock.number, " -> ").concat(this.remoteBlock.number, " behind ").concat(distance, ", will sync ").concat(needed, " blocks at ").concat(new Date().toISOString()));
-	                _context13.next = 46;
-	                return this.succeeded(this.currentBlock, needed);
+	                _context14.next = 45;
+	                return this.doRollback(synced, remote);
 
-	              case 46:
-	                this._currentBlock = _context13.sent;
+	              case 45:
+	                this._currentBlock = _context14.sent;
+	                this.logger.info("[".concat(this.name, "] Rollback... rollback ").concat(JSON.stringify(synced), " -> ").concat(JSON.stringify(remote), ", current ").concat(currentBlockNumber, ", latest ").concat(remoteBlockNumber, " at ").concat(now));
 	                this.isSyncing = false;
-	                return _context13.abrupt("return");
+	                return _context14.abrupt("return");
 
-	              case 51:
-	                _context13.prev = 51;
-	                _context13.t0 = _context13["catch"](2);
-	                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.error(_context13.t0, "[Tracker] failed: height ".concat(this.currentBlock.number, " at: ").concat(new Date().toISOString()));
-	                _context13.next = 56;
+	              case 49:
+	                blocks = new Array(needed).fill(0).map(function (v, idx) {
+	                  return _this.currentBlock.number + _this.step * idx;
+	                });
+	                this.logger.info("[".concat(this.name, "] Ing... ").concat(this.step, " ").concat(currentBlockNumber, " -> ").concat(remoteBlockNumber, " blocks ").concat(blocks.join('.'), " distance ").concat(distance, ", will sync ").concat(needed, " blocks at ").concat(now));
+	                _context14.next = 53;
+	                return this.succeeded(this.currentBlock, blocks);
+
+	              case 53:
+	                this._currentBlock = _context14.sent;
+	                this.isSyncing = false;
+	                return _context14.abrupt("return");
+
+	              case 58:
+	                _context14.prev = 58;
+	                _context14.t0 = _context14["catch"](5);
+	                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.error(_context14.t0, "[".concat(this.name, "] failed: height ").concat(currentBlockNumber, " at: ").concat(now));
+	                _context14.next = 63;
 	                return this.failed(this.currentBlock);
 
-	              case 56:
+	              case 63:
 	                this.sleep(this.interval);
 	                this.isSyncing = false;
-	                return _context13.abrupt("return");
+	                return _context14.abrupt("return");
 
-	              case 59:
+	              case 66:
 	              case "end":
-	                return _context13.stop();
+	                return _context14.stop();
 	            }
 	          }
-	        }, _callee13, this, [[2, 51]]);
+	        }, _callee14, this, [[5, 58]]);
 	      }));
 
 	      function loop() {

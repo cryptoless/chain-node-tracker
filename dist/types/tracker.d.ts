@@ -1,29 +1,43 @@
 import { IBlock } from './block';
 import { RemoteAdapter, LocalAdapter } from './adapter';
-export interface Options {
+export interface Logger {
+    trace(...args: any[]): void;
+    debug(...args: any[]): void;
+    info(...args: any[]): void;
+    warn(...args: any[]): void;
+    error(...args: any[]): void;
+    error(msg: string, ...args: any[]): void;
+}
+export interface TrackerOptions {
+    name?: string;
     enable?: boolean;
-    logger?: any;
+    logger?: Logger;
     startBlock?: number;
+    endBlock?: number;
     interval?: number;
     concurrency?: number;
+    step?: number;
     behind?: number;
     localAdapter: LocalAdapter<IBlock>;
     remoteAdapter: RemoteAdapter<IBlock>;
 }
 export declare class Tracker {
-    logger: any;
+    name: string;
+    logger: Logger;
     isSyncing: boolean;
     stopped: boolean;
     enable: boolean;
     interval: number;
     concurrency: number;
+    step: number;
     behind: number;
     startBlock: number;
+    endBlock: number;
     _currentBlock?: IBlock;
     _remoteBlock?: IBlock;
     localAdapter: LocalAdapter<IBlock>;
     remoteAdapter: RemoteAdapter<IBlock>;
-    constructor(options: Options);
+    constructor(options: TrackerOptions);
     get currentBlock(): IBlock;
     get remoteBlock(): IBlock;
     doRollback(_block: IBlock, _remote: IBlock): Promise<IBlock>;
@@ -33,7 +47,7 @@ export declare class Tracker {
      * @param _needed need to sync block count
      * @returns the next block number to sync
      */
-    succeeded(_block: IBlock, _needed?: number): Promise<IBlock>;
+    succeeded(_block: IBlock, _blocks: number[]): Promise<IBlock>;
     /**
      *
      * @param _block current block
@@ -43,10 +57,15 @@ export declare class Tracker {
     get disable(): boolean;
     sleep(_ms: number): Promise<number>;
     refreshBlock(block: IBlock): Promise<IBlock | undefined>;
-    pause(_blockNumber?: number): Promise<boolean>;
-    doPause(): Promise<void>;
+    pause(blockNumber: number): Promise<boolean | 0>;
+    doPause(blockNumber: number): Promise<void>;
+    compareSyncedAndRemoteBlocks(blockNumber: number): Promise<{
+        equal: boolean | undefined;
+        synced: IBlock | undefined;
+        remote: IBlock | undefined;
+    }>;
     shouldRollback(): Promise<{
-        rollback: boolean;
+        rollback: boolean | "" | undefined;
         synced: IBlock | undefined;
         remote: IBlock | undefined;
     }>;
