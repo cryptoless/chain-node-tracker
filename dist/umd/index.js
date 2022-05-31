@@ -1580,7 +1580,7 @@
 	                blocks = new Array(needed).fill(0).map(function (_i, idx) {
 	                  return _this.currentBlock.number + _this.step * idx;
 	                });
-	                this.logger.info("[".concat(this.name, "] Ing... step(").concat(this.step, ") [").concat(currentBlockNumber, ", ").concat(remoteBlockNumber, "] blocks [").concat(blocks.join('.'), "] distance ").concat(distance, ", will sync ").concat(needed, " blocks at ").concat(now));
+	                this.logger.info("[".concat(this.name, "] Ing... step(").concat(this.step, ") [").concat(currentBlockNumber, ", ").concat(remoteBlockNumber, "] blocks [").concat(blocks.join(','), "] distance ").concat(distance, ", will sync ").concat(needed, " blocks at ").concat(now));
 	                _context14.next = 53;
 	                return this.succeeded(this.currentBlock, blocks);
 

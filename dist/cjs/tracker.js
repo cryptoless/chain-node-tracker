@@ -172,7 +172,7 @@ class Tracker {
                 return;
             }
             const blocks = new Array(needed).fill(0).map((_i, idx) => this.currentBlock.number + this.step * idx);
-            this.logger.info(`[${this.name}] Ing... step(${this.step}) [${currentBlockNumber}, ${remoteBlockNumber}] blocks [${blocks.join('.')}] distance ${distance}, will sync ${needed} blocks at ${now}`);
+            this.logger.info(`[${this.name}] Ing... step(${this.step}) [${currentBlockNumber}, ${remoteBlockNumber}] blocks [${blocks.join(',')}] distance ${distance}, will sync ${needed} blocks at ${now}`);
             this._currentBlock = await this.succeeded(this.currentBlock, blocks);
             this.isSyncing = false;
             return;
