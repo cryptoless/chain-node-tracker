@@ -130,7 +130,7 @@ export class Tracker {
 
   async pause(blockNumber: number) {
     return (
-      (this.startBlock && this.startBlock > 0 && this.startBlock < blockNumber) || // head block
+      (this.startBlock && this.startBlock > 0 && blockNumber < this.startBlock) || // head block
       (this.endBlock && this.endBlock > 0 && blockNumber > this.endBlock) // tail block
     );
   }
