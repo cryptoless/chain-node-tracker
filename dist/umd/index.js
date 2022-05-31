@@ -1217,7 +1217,7 @@
 	          while (1) {
 	            switch (_context7.prev = _context7.next) {
 	              case 0:
-	                return _context7.abrupt("return", this.startBlock && this.startBlock > 0 && this.startBlock < blockNumber || // head block
+	                return _context7.abrupt("return", this.startBlock && this.startBlock > 0 && blockNumber < this.startBlock || // head block
 	                this.endBlock && this.endBlock > 0 && blockNumber > this.endBlock // tail block
 	                );
 

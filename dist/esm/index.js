@@ -80,7 +80,7 @@ class Tracker {
         return block;
     }
     async pause(blockNumber) {
-        return ((this.startBlock && this.startBlock > 0 && this.startBlock < blockNumber) || // head block
+        return ((this.startBlock && this.startBlock > 0 && blockNumber < this.startBlock) || // head block
             (this.endBlock && this.endBlock > 0 && blockNumber > this.endBlock) // tail block
         );
     }
