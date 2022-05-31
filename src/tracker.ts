@@ -10,6 +10,11 @@ export interface Logger {
   error(msg: string, ...args: any[]): void;
 }
 
+export enum Step {
+  TAIL = 1,
+  HEAD = -1,
+}
+
 export interface TrackerOptions {
   name?: string;
   enable?: boolean;
@@ -33,7 +38,7 @@ export class Tracker {
   enable: boolean;
   interval: number;
   concurrency: number;
-  step: number;
+  step: Step;
   behind: number;
 
   startBlock: number;
@@ -92,7 +97,7 @@ export class Tracker {
 
   /**
    * @param _block current block number
-   * @param _needed need to sync block count
+   * @param _blocks need to sync blocks
    * @returns the next block number to sync
    */
   async succeeded(_block: IBlock, _blocks: number[]): Promise<IBlock> {
@@ -104,7 +109,7 @@ export class Tracker {
    * @param _block current block
    * @returns void
    */
-  async failed(_blockNumber: IBlock) {
+  async failed(_block: IBlock) {
     throw new Error('Please implement failed function');
   }
 
@@ -205,7 +210,7 @@ export class Tracker {
       const distance = this.step > 0 ? remoteBlockNumber - currentBlockNumber - this.behind : currentBlockNumber;
       const needed = Math.min(Math.max(distance, 1), this.concurrency);
       if (distance < 0) {
-        this.logger.info(`[${this.name}] Refresh... ${currentBlockNumber} -> ${remoteBlockNumber}, will sleep ${this.interval}`);
+        this.logger.info(`[${this.name}] Refresh... [${currentBlockNumber}, ${remoteBlockNumber}], will sleep ${this.interval}`);
         this._remoteBlock = await this.remoteAdapter.getLatestBlock();
         await this.sleep(this.interval);
         this.isSyncing = false;
@@ -229,9 +234,9 @@ export class Tracker {
         return;
       }
 
-      const blocks = new Array(needed).fill(0).map((v, idx: number) => this.currentBlock.number + this.step * idx);
+      const blocks = new Array(needed).fill(0).map((_i, idx: number) => this.currentBlock.number + this.step * idx);
 
-      this.logger.info(`[${this.name}] Ing... ${this.step} ${currentBlockNumber} -> ${remoteBlockNumber} blocks ${blocks.join('.')} distance ${distance}, will sync ${needed} blocks at ${now}`);
+      this.logger.info(`[${this.name}] Ing... step(${this.step}) [${currentBlockNumber}, ${remoteBlockNumber}] blocks [${blocks.join(',')}] distance ${distance}, will sync ${needed} blocks at ${now}`);
 
       this._currentBlock = await this.succeeded(this.currentBlock, blocks);
       this.isSyncing = false;

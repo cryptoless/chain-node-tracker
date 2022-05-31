@@ -976,7 +976,14 @@
 
 	var _regeneratorRuntime = /*@__PURE__*/getDefaultExportFromCjs(regenerator.exports);
 
-	// (startBlock, endBlock]
+	exports.Step = void 0;
+
+	(function (Step) {
+	  Step[Step["TAIL"] = 1] = "TAIL";
+	  Step[Step["HEAD"] = -1] = "HEAD";
+	})(exports.Step || (exports.Step = {})); // (startBlock, endBlock]
+
+
 	var Tracker = /*#__PURE__*/function () {
 	  function Tracker(options) {
 	    _classCallCheck(this, Tracker);
@@ -1083,7 +1090,7 @@
 	    }()
 	    /**
 	     * @param _block current block number
-	     * @param _needed need to sync block count
+	     * @param _blocks need to sync blocks
 	     * @returns the next block number to sync
 	     */
 
@@ -1120,7 +1127,7 @@
 	  }, {
 	    key: "failed",
 	    value: function () {
-	      var _failed = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee4(_blockNumber) {
+	      var _failed = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee4(_block) {
 	        return _regeneratorRuntime.wrap(function _callee4$(_context4) {
 	          while (1) {
 	            switch (_context4.prev = _context4.next) {
@@ -1504,7 +1511,7 @@
 	                  break;
 	                }
 
-	                this.logger.info("[".concat(this.name, "] Refresh... ").concat(currentBlockNumber, " -> ").concat(remoteBlockNumber, ", will sleep ").concat(this.interval));
+	                this.logger.info("[".concat(this.name, "] Refresh... [").concat(currentBlockNumber, ", ").concat(remoteBlockNumber, "], will sleep ").concat(this.interval));
 	                _context14.next = 20;
 	                return this.remoteAdapter.getLatestBlock();
 
@@ -1570,10 +1577,10 @@
 	                return _context14.abrupt("return");
 
 	              case 49:
-	                blocks = new Array(needed).fill(0).map(function (v, idx) {
+	                blocks = new Array(needed).fill(0).map(function (_i, idx) {
 	                  return _this.currentBlock.number + _this.step * idx;
 	                });
-	                this.logger.info("[".concat(this.name, "] Ing... ").concat(this.step, " ").concat(currentBlockNumber, " -> ").concat(remoteBlockNumber, " blocks ").concat(blocks.join('.'), " distance ").concat(distance, ", will sync ").concat(needed, " blocks at ").concat(now));
+	                this.logger.info("[".concat(this.name, "] Ing... step(").concat(this.step, ") [").concat(currentBlockNumber, ", ").concat(remoteBlockNumber, "] blocks [").concat(blocks.join('.'), "] distance ").concat(distance, ", will sync ").concat(needed, " blocks at ").concat(now));
 	                _context14.next = 53;
 	                return this.succeeded(this.currentBlock, blocks);
 

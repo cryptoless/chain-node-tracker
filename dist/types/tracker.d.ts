@@ -8,6 +8,10 @@ export interface Logger {
     error(...args: any[]): void;
     error(msg: string, ...args: any[]): void;
 }
+export declare enum Step {
+    TAIL = 1,
+    HEAD = -1
+}
 export interface TrackerOptions {
     name?: string;
     enable?: boolean;
@@ -29,7 +33,7 @@ export declare class Tracker {
     enable: boolean;
     interval: number;
     concurrency: number;
-    step: number;
+    step: Step;
     behind: number;
     startBlock: number;
     endBlock: number;
@@ -44,7 +48,7 @@ export declare class Tracker {
     prepare(): Promise<void>;
     /**
      * @param _block current block number
-     * @param _needed need to sync block count
+     * @param _blocks need to sync blocks
      * @returns the next block number to sync
      */
     succeeded(_block: IBlock, _blocks: number[]): Promise<IBlock>;
@@ -53,7 +57,7 @@ export declare class Tracker {
      * @param _block current block
      * @returns void
      */
-    failed(_blockNumber: IBlock): Promise<void>;
+    failed(_block: IBlock): Promise<void>;
     get disable(): boolean;
     sleep(_ms: number): Promise<number>;
     refreshBlock(block: IBlock): Promise<IBlock | undefined>;

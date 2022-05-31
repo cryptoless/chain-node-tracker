@@ -10,4 +10,8 @@ var tracker = require('./tracker.js');
 
 exports.LocalAdapter = local.LocalAdapter;
 exports.RemoteAdapter = remote.RemoteAdapter;
+Object.defineProperty(exports, 'Step', {
+	enumerable: true,
+	get: function () { return tracker.Step; }
+});
 exports.Tracker = tracker.Tracker;
