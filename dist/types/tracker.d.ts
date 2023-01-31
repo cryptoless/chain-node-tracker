@@ -1,7 +1,7 @@
 import { IBlock } from './block';
 import { RemoteAdapter, LocalAdapter } from './adapter';
 export interface Logger {
-    trace(...args: any[]): void;
+    trace?(...args: any[]): void;
     debug(...args: any[]): void;
     info(...args: any[]): void;
     warn(...args: any[]): void;
