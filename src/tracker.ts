@@ -242,7 +242,7 @@ export class Tracker {
       this.isSyncing = false;
       return;
     } catch (e: any) {
-      this.logger?.error(e, `[${this.name}] failed: height ${currentBlockNumber} at: ${now}`);
+      this.logger?.error(`[${this.name}] failed: height ${currentBlockNumber} at: ${now}`, e);
       await this.failed(this.currentBlock);
       this.sleep(this.interval);
       this.isSyncing = false;

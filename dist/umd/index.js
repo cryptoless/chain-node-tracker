@@ -1592,7 +1592,7 @@
 	              case 58:
 	                _context14.prev = 58;
 	                _context14.t0 = _context14["catch"](5);
-	                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.error(_context14.t0, "[".concat(this.name, "] failed: height ").concat(currentBlockNumber, " at: ").concat(now));
+	                (_b = this.logger) === null || _b === void 0 ? void 0 : _b.error("[".concat(this.name, "] failed: height ").concat(currentBlockNumber, " at: ").concat(now), _context14.t0);
 	                _context14.next = 63;
 	                return this.failed(this.currentBlock);
 

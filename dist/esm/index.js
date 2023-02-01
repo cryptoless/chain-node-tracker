@@ -180,7 +180,7 @@ class Tracker {
             return;
         }
         catch (e) {
-            (_b = this.logger) === null || _b === void 0 ? void 0 : _b.error(e, `[${this.name}] failed: height ${currentBlockNumber} at: ${now}`);
+            (_b = this.logger) === null || _b === void 0 ? void 0 : _b.error(`[${this.name}] failed: height ${currentBlockNumber} at: ${now}`, e);
             await this.failed(this.currentBlock);
             this.sleep(this.interval);
             this.isSyncing = false;
